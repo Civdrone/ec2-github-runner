@@ -3,13 +3,11 @@ const github = require('@actions/github');
 const _ = require('lodash');
 const config = require('./config');
 
-// use the unique label to find the runner
-// as we don't have the runner's id, it's not possible to get it in any other way
 async function getRunner(label) {
   const octokit = github.getOctokit(config.input.githubToken);
 
   try {
-    const runners = await octokit.paginate('GET /repos/{owner}/{repo}/actions/runners', config.githubContext);
+    const runners = await octokit.paginate('GET /orgs/{owner}/actions/runners', config.githubContext);
     const foundRunners = _.filter(runners, { labels: [{ name: label }] });
     return foundRunners.length > 0 ? foundRunners[0] : null;
   } catch (error) {
@@ -17,12 +15,11 @@ async function getRunner(label) {
   }
 }
 
-// get GitHub Registration Token for registering a self-hosted runner
 async function getRegistrationToken() {
   const octokit = github.getOctokit(config.input.githubToken);
 
   try {
-    const response = await octokit.request('POST /repos/{owner}/{repo}/actions/runners/registration-token', config.githubContext);
+    const response = await octokit.request('POST /orgs/{owner}/actions/runners/registration-token', config.githubContext);
     core.info('GitHub Registration Token is received');
     return response.data.token;
   } catch (error) {
@@ -35,14 +32,13 @@ async function removeRunner() {
   const runner = await getRunner(config.input.label);
   const octokit = github.getOctokit(config.input.githubToken);
 
-  // skip the runner removal process if the runner is not found
   if (!runner) {
     core.info(`GitHub self-hosted runner with label ${config.input.label} is not found, so the removal is skipped`);
     return;
   }
 
   try {
-    await octokit.request('DELETE /repos/{owner}/{repo}/actions/runners/{runner_id}', _.merge(config.githubContext, { runner_id: runner.id }));
+    await octokit.request('DELETE /orgs/{owner}/actions/runners/{runner_id}', _.merge(config.githubContext, { runner_id: runner.id }));
     core.info(`GitHub self-hosted runner ${runner.name} is removed`);
     return;
   } catch (error) {
