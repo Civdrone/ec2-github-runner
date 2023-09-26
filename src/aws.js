@@ -4,7 +4,12 @@ const config = require('./config');
 
 // User data scripts are run as the root user
 function buildUserDataScript(githubRegistrationToken, label) {
-  const runnerUser = config.input.runnerUser || "ubuntu"; // Default to 'ubuntu' if not provided
+  const runnerUser = config.input.runnerUser || "root"; // Default to 'root' if not provided
+
+  // Helper function to prepend sudo for non-root users
+  const runAsUser = (command) => {
+    return runnerUser === "root" ? command : `sudo -u ${runnerUser} ${command}`;
+  };
 
   const baseCommands = [
     '#!/bin/bash',
@@ -13,8 +18,8 @@ function buildUserDataScript(githubRegistrationToken, label) {
     'curl -O -L https://github.com/actions/runner/releases/download/v2.305.0/actions-runner-linux-${RUNNER_ARCH}-2.305.0.tar.gz',
     'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-2.305.0.tar.gz',
     `chown -R ${runnerUser}:${runnerUser} .`,
-    `sudo -u ${runnerUser} ./config.sh --url https://github.com/${config.githubContext.owner} --token ${githubRegistrationToken} --labels ${label} --runnergroup aws_runners --unattended -u ${runnerUser}`,
-    `sudo -u ${runnerUser} ./run.sh`,
+    runAsUser(`./config.sh --url https://github.com/${config.githubContext.owner} --token ${githubRegistrationToken} --labels ${label} --runnergroup aws_runners --unattended -u ${runnerUser}`),
+    runAsUser('./run.sh'),
   ];
 
   if (config.input.runnerHomeDir) {
@@ -22,8 +27,8 @@ function buildUserDataScript(githubRegistrationToken, label) {
       '#!/bin/bash',
       `cd "${config.input.runnerHomeDir}"`,
       'export RUNNER_ALLOW_RUNASROOT=1',
-      `sudo -u ${runnerUser} ./config.sh --url https://github.com/${config.githubContext.owner} --token ${githubRegistrationToken} --labels ${label} --runnergroup aws_runners --unattended -u ${runnerUser}`,
-      `sudo -u ${runnerUser} ./run.sh`,
+      runAsUser(`./config.sh --url https://github.com/${config.githubContext.owner} --token ${githubRegistrationToken} --labels ${label} --runnergroup aws_runners --unattended -u ${runnerUser}`),
+      runAsUser('./run.sh'),
     ];
   } else {
     return baseCommands;
