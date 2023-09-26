@@ -18,6 +18,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
     'curl -O -L https://github.com/actions/runner/releases/download/v2.305.0/actions-runner-linux-${RUNNER_ARCH}-2.305.0.tar.gz',
     'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-2.305.0.tar.gz',
     `chown -R ${runnerUser}:${runnerUser} .`,
+    'export RUNNER_ALLOW_RUNASROOT=1',
     runAsUser(`./config.sh --url https://github.com/${config.githubContext.owner} --token ${githubRegistrationToken} --labels ${label} --runnergroup aws_runners --unattended`),
     runAsUser('./run.sh'),
   ];
