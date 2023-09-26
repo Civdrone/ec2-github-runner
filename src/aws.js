@@ -8,7 +8,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
 
   // Helper function to prepend sudo for non-root users
   const runAsUser = (command) => {
-    return runnerUser === "root" ? command : `sudo -u ${runnerUser} ${command}`;
+    return runnerUser === "root" ? command : `sudo -u ${runnerUser} ${command} -u ${runnerUser}`;
   };
 
   const baseCommands = [
@@ -18,7 +18,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
     'curl -O -L https://github.com/actions/runner/releases/download/v2.305.0/actions-runner-linux-${RUNNER_ARCH}-2.305.0.tar.gz',
     'tar xzf ./actions-runner-linux-${RUNNER_ARCH}-2.305.0.tar.gz',
     `chown -R ${runnerUser}:${runnerUser} .`,
-    runAsUser(`./config.sh --url https://github.com/${config.githubContext.owner} --token ${githubRegistrationToken} --labels ${label} --runnergroup aws_runners --unattended -u ${runnerUser}`),
+    runAsUser(`./config.sh --url https://github.com/${config.githubContext.owner} --token ${githubRegistrationToken} --labels ${label} --runnergroup aws_runners --unattended`),
     runAsUser('./run.sh'),
   ];
 
@@ -27,7 +27,7 @@ function buildUserDataScript(githubRegistrationToken, label) {
       '#!/bin/bash',
       `cd "${config.input.runnerHomeDir}"`,
       'export RUNNER_ALLOW_RUNASROOT=1',
-      runAsUser(`./config.sh --url https://github.com/${config.githubContext.owner} --token ${githubRegistrationToken} --labels ${label} --runnergroup aws_runners --unattended -u ${runnerUser}`),
+      runAsUser(`./config.sh --url https://github.com/${config.githubContext.owner} --token ${githubRegistrationToken} --labels ${label} --runnergroup aws_runners --unattended`),
       runAsUser('./run.sh'),
     ];
   } else {
