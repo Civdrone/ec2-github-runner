@@ -80,9 +80,12 @@ async function terminateEc2Instance() {
 }
 
 async function customWaitForInstanceRunning(ec2InstanceId) {
+  const initialDelaySeconds = 10; // Initial delay before starting the polling
   const timeoutMinutes = 6; // Set the desired timeout
   const retryIntervalSeconds = 5; // Set the polling interval
   let elapsedSeconds = 0;
+
+  await new Promise(resolve => setTimeout(resolve, initialDelaySeconds * 1000)); // Wait initially before starting to poll
 
   return new Promise(async (resolve, reject) => {
       while (elapsedSeconds < timeoutMinutes * 60) {
