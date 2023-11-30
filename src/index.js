@@ -24,6 +24,7 @@ async function stop() {
 
 (async function () {
   try {
+    console.log(`Running on Node.js version ${process.version}`);
     config.input.mode === 'start' ? await start() : await stop();
   } catch (error) {
     core.error(error);

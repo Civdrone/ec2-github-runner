@@ -48,9 +48,9 @@ async function removeRunner() {
 }
 
 async function waitForRunnerRegistered(label) {
-  const timeoutMinutes = 5;
-  const retryIntervalSeconds = 10;
-  const quietPeriodSeconds = 30;
+  const timeoutMinutes = 6; // Extend timeout to 6 minutes
+  const retryIntervalSeconds = 5; // Retry every 5 seconds
+  const quietPeriodSeconds = 15; // Reduce initial wait to 15 seconds
   let waitSeconds = 0;
 
   core.info(`Waiting ${quietPeriodSeconds}s for the AWS EC2 instance to be registered in GitHub as a new self-hosted runner`);
