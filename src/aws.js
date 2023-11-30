@@ -1,4 +1,4 @@
-const { EC2Client, RunInstancesCommand, TerminateInstancesCommand, WaiterState, waitForInstanceRunning } = require('@aws-sdk/client-ec2');
+const { EC2Client, RunInstancesCommand, TerminateInstancesCommand, DescribeInstancesCommand } = require('@aws-sdk/client-ec2');
 const core = require('@actions/core');
 const config = require('./config');
 
@@ -80,21 +80,42 @@ async function terminateEc2Instance() {
 }
 
 async function customWaitForInstanceRunning(ec2InstanceId) {
-  const params = {
-      InstanceIds: [ec2InstanceId],
-  };
+  const timeoutMinutes = 6; // Set the desired timeout
+  const retryIntervalSeconds = 5; // Set the polling interval
+  let elapsedSeconds = 0;
 
-  try {
-      await waitForInstanceRunning(ec2, params); // Using the imported function
-      core.info(`AWS EC2 instance ${ec2InstanceId} is up and running`);
-  } catch (error) {
-      core.error(`AWS EC2 instance ${ec2InstanceId} initialization error`);
-      throw error;
-  }
+  return new Promise(async (resolve, reject) => {
+      while (elapsedSeconds < timeoutMinutes * 60) {
+          try {
+              const command = new DescribeInstancesCommand({ InstanceIds: [ec2InstanceId] });
+              const response = await ec2.send(command);
+              const instanceState = response.Reservations[0].Instances[0].State.Name;
+
+              if (instanceState === "running") {
+                  core.info(`AWS EC2 instance ${ec2InstanceId} is up and running`);
+                  resolve();
+                  break;
+              }
+
+              await new Promise(resolve => setTimeout(resolve, retryIntervalSeconds * 1000));
+              elapsedSeconds += retryIntervalSeconds;
+          } catch (error) {
+              core.error(`Error while checking EC2 instance status: ${error}`);
+              reject(error);
+              break;
+          }
+      }
+
+      if (elapsedSeconds >= timeoutMinutes * 60) {
+          const errorMessage = `Timeout: AWS EC2 instance ${ec2InstanceId} did not reach 'running' state within ${timeoutMinutes} minutes`;
+          core.error(errorMessage);
+          reject(new Error(errorMessage));
+      }
+  });
 }
 
 module.exports = {
-  startEc2Instance,
-  terminateEc2Instance,
-  customWaitForInstanceRunning,
+startEc2Instance,
+terminateEc2Instance,
+customWaitForInstanceRunning,
 };
