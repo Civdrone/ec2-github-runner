@@ -13,7 +13,7 @@ async function start() {
   const githubRegistrationToken = await gh.getRegistrationToken();
   const ec2InstanceId = await aws.startEc2Instance(label, githubRegistrationToken);
   setOutput(label, ec2InstanceId);
-  await aws.waitForInstanceRunning(ec2InstanceId);
+  await aws.customWaitForInstanceRunning(ec2InstanceId);
   await gh.waitForRunnerRegistered(label);
 }
 
@@ -24,6 +24,7 @@ async function stop() {
 
 (async function () {
   try {
+    console.log(`Running on Node.js version ${process.version}`);
     config.input.mode === 'start' ? await start() : await stop();
   } catch (error) {
     core.error(error);

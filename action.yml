@@ -5,6 +5,10 @@ branding:
   icon: 'box'
   color: 'orange'
 inputs:
+  runnerUser:
+    description: 'The user under which the GitHub Runner should run'
+    required: false
+    default: 'root'
   mode:
     description: >-
       Specify here which mode you want to use:
@@ -82,5 +86,5 @@ outputs:
       EC2 Instance Id of the created runner.
       The id is used to terminate the EC2 instance when the runner is not needed anymore.
 runs:
-  using: node16
+  using: node20
   main: ./dist/index.js
